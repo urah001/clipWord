@@ -6,7 +6,7 @@ import threading
 class ClipboardApp:
     def __init__(self, root):
         self.root = root
-        self.root.geometry("300x200+100+100")  # Set initial position
+        self.root.geometry("300x200+100+100")  # Set initial size and position
         self.root.overrideredirect(True)  # Remove window decorations
         self.root.wm_attributes("-topmost", True)  # Keep window on top
         self.root.configure(bg="lightgrey")
@@ -29,7 +29,7 @@ class ClipboardApp:
 
         # Text area to display clipboard history
         self.text_area = tk.Text(self.frame, height=6, width=30, font=("Arial", 12), wrap=tk.WORD)
-        self.text_area.pack(padx=10, pady=5)
+        self.text_area.pack(padx=10, pady=5, fill=tk.BOTH, expand=True)
         self.text_area.config(state=tk.DISABLED)
 
         # Initialize clipboard history
@@ -41,6 +41,12 @@ class ClipboardApp:
         # Bind mouse events for dragging
         self.title_bar.bind("<Button-1>", self.start_move)
         self.title_bar.bind("<B1-Motion>", self.on_motion)
+
+        # Bind mouse events for resizing
+        self.resizer = tk.Frame(self.root, bg="darkgrey", cursor="arrow")  # Changed cursor to a common one
+        self.resizer.pack(side=tk.BOTTOM, anchor=tk.SE, padx=2, pady=2)
+        self.resizer.bind("<Button-1>", self.start_resize)
+        self.resizer.bind("<B1-Motion>", self.perform_resize)
 
     def update_clipboard(self):
         try:
@@ -73,6 +79,27 @@ class ClipboardApp:
         y = event.y_root - self.y
         self.root.geometry(f"+{x}+{y}")
 
+    def start_resize(self, event):
+        """Initialize the start of window resize."""
+        self.prev_x = event.x_root
+        self.prev_y = event.y_root
+        self.start_width = self.root.winfo_width()
+        self.start_height = self.root.winfo_height()
+
+    def perform_resize(self, event):
+        """Handle window resizing."""
+        delta_x = event.x_root - self.prev_x
+        delta_y = event.y_root - self.prev_y
+        new_width = self.start_width + delta_x
+        new_height = self.start_height + delta_y
+
+        # Set minimum size constraints
+        new_width = max(200, new_width)
+        new_height = max(150, new_height)
+
+        # Resize window
+        self.root.geometry(f"{new_width}x{new_height}")
+
 
 def start_gui():
     root = tk.Tk()
@@ -82,3 +109,4 @@ def start_gui():
 
 if __name__ == "__main__":
     threading.Thread(target=start_gui).start()
+
